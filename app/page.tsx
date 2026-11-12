@@ -1,69 +1,154 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { chapters } from "@/data/chapters";
+import { ChapterMenu } from "@/components/ChapterMenu";
+import { QuizCard } from "@/components/QuizCard";
+import { ResultScreen } from "@/components/ResultScreen";
+import { Calculator, Sparkles } from "lucide-react";
+
+export default function QuizApp() {
+  // State variables for chapter, current question, answers, and result screen
+  const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [showResult, setShowResult] = useState<boolean>(false);
+
+  // Active chapter and questions
+  const activeChapter =
+    chapters.find((ch) => ch.id === selectedChapter) || null;
+  const currentQuestions = activeChapter ? activeChapter.questions : [];
+  const currentQuestion = currentQuestions[currentIndex] || null;
+  const allQuestionIds = currentQuestions.map((q) => q.id);
+
+  // Calculate final score based on recorded user answers
+  const score = currentQuestions.reduce((acc, q) => {
+    return userAnswers[q.id] === q.correctAnswer ? acc + 1 : acc;
+  }, 0);
+
+  // Actions
+  const handleSelectChapter = (chapterId: string) => {
+    setSelectedChapter(chapterId);
+    setCurrentIndex(0);
+    setUserAnswers({});
+    setShowResult(false);
+  };
+
+  const handleSelectOption = (option: string) => {
+    if (!currentQuestion) return;
+    setUserAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.id]: option,
+    }));
+  };
+
+  const handlePreviousQuestion = () => {
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNextQuestion = () => {
+    setCurrentIndex((prev) => Math.min(currentQuestions.length - 1, prev + 1));
+  };
+
+  const handleJumpToQuestion = (index: number) => {
+    if (index >= 0 && index < currentQuestions.length) {
+      setCurrentIndex(index);
+    }
+  };
+
+  const handleSubmitQuiz = () => {
+    setShowResult(true);
+  };
+
+  const handleRetry = () => {
+    setCurrentIndex(0);
+    setUserAnswers({});
+    setShowResult(false);
+  };
+
+  const handleBackToChapters = () => {
+    setSelectedChapter(null);
+    setCurrentIndex(0);
+    setUserAnswers({});
+    setShowResult(false);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-50 via-blue-50/20 to-slate-100">
+      {/* App Header */}
+      <header className="sticky top-0 z-10 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5 sm:px-6">
+          <button
+            type="button"
+            onClick={handleBackToChapters}
+            className="flex items-center gap-3 text-left transition-opacity hover:opacity-85"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/30">
+              <Calculator className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-slate-900 sm:text-lg">
+                TKA Matematika SD
+              </h1>
+              <p className="text-xs text-slate-500">Kelas 6 Sekolah Dasar</p>
+            </div>
+          </button>
+
+          <div className="flex items-center gap-1.5 rounded-full border border-blue-200/70 bg-blue-50/70 px-3 py-1 text-xs font-semibold text-blue-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Latihan Per Bab</span>
+          </div>
         </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-6 md:p-8">
+        {/* Screen 1: Chapter Selection Menu */}
+        {selectedChapter === null && (
+          <ChapterMenu
+            chapters={chapters}
+            onSelectChapter={handleSelectChapter}
+          />
+        )}
+
+        {/* Screen 2: Active Quiz with Navigation & Jump Palette */}
+        {selectedChapter !== null && !showResult && currentQuestion && (
+          <QuizCard
+            question={currentQuestion}
+            currentIndex={currentIndex}
+            totalQuestions={currentQuestions.length}
+            chapterTitle={activeChapter?.title}
+            onSelectOption={handleSelectOption}
+            onPreviousQuestion={handlePreviousQuestion}
+            onNextQuestion={handleNextQuestion}
+            onJumpToQuestion={handleJumpToQuestion}
+            onSubmitQuiz={handleSubmitQuiz}
+            onBackToMenu={handleBackToChapters}
+            selectedOption={userAnswers[currentQuestion.id] || null}
+            answeredQuestionIds={userAnswers}
+            allQuestionIds={allQuestionIds}
+          />
+        )}
+
+        {/* Screen 3: Result Screen */}
+        {selectedChapter !== null && showResult && (
+          <ResultScreen
+            score={score}
+            totalQuestions={currentQuestions.length}
+            chapterTitle={activeChapter?.title}
+            onRetry={handleRetry}
+            onBackToChapters={handleBackToChapters}
+          />
+        )}
       </main>
+
+      {/* App Footer */}
+      <footer className="border-t border-slate-200/80 bg-white/50 py-4 text-center text-xs text-slate-500">
+        <p>
+          &copy; {new Date().getFullYear()} TKA Matematika SD Kelas 6 &bull;
+          Aplikasi Latihan Soal Interaktif
+        </p>
+      </footer>
     </div>
   );
 }
